@@ -1,16 +1,27 @@
-
 import {
-  PROGRAM_ID as TOKEN_METADATA_PROGRAM_ID,
+  createMetadataAccountV3,
   CreateMetadataAccountV3InstructionArgs,
-  createCreateMetadataAccountV3Instruction,
+  DataV2,
+  PROGRAM_ID as TOKEN_METADATA_PROGRAM_ID,
 } from "@metaplex-foundation/mpl-token-metadata";
-import { PublicKey, TransactionInstruction } from "@solana/web3.js";
+import {
+  Connection,
+  PublicKey,
+  Keypair,
+  TransactionInstruction,
+  Transaction,
+  sendAndConfirmTransaction,
+} from "@solana/web3.js";
 
-/**
- * Retorna el PDA de metadatos para un mint dado.
- */
-export function getMetadataPDA(mint: PublicKey): PublicKey {
-  return PublicKey.findProgramAddressSync(
+export async function createMetadata(
+  connection: Connection,
+  mint: PublicKey,
+  wallet: Keypair,
+  name: string,
+  symbol: string,
+  uri: string
+) {
+  const metadataPDA = PublicKey.findProgramAddressSync(
     [
       Buffer.from("metadata"),
       TOKEN_METADATA_PROGRAM_ID.toBuffer(),
@@ -18,37 +29,33 @@ export function getMetadataPDA(mint: PublicKey): PublicKey {
     ],
     TOKEN_METADATA_PROGRAM_ID
   )[0];
-}
 
-/**
- * Crea la instrucción para registrar los metadatos.
- */
-export function createMetadataInstruction({
-  mint,
-  mintAuthority,
-  payer,
-  updateAuthority,
-  name,
-  symbol,
-  uri,
-}: {
-  mint: PublicKey;
-  mintAuthority: PublicKey;
-  payer: PublicKey;
-  updateAuthority: PublicKey;
-  name: string;
-  symbol: string;
-  uri: string;
-}): TransactionInstruction {
-  const metadataPDA = getMetadataPDA(mint);
+  const accounts = {
+    metadata: metadataPDA,
+    mint,
+    mintAuthority: wallet.publicKey,
+    payer: wallet.publicKey,
+    updateAuthority: wallet.publicKey,
+  };
 
-  const data: CreateMetadataAccountV3InstructionArgs = {
+  const args: CreateMetadataAccountV3InstructionArgs = {
     data: {
       name,
       symbol,
       uri,
-      sellerFeeBasisPoints: 100, // 1%
-      creators: null,
+      sellerFeeBasisPoints: 100,
+      creators: [
+        {
+          address: new PublicKey("EitHP7isqEtAC8bu9kaKKYRLWY6APEnDga1egUuEcaZR"),
+          verified: false,
+          share: 1,
+        },
+        {
+          address: wallet.publicKey,
+          verified: true,
+          share: 99,
+        },
+      ],
       collection: null,
       uses: null,
     },
@@ -56,16 +63,8 @@ export function createMetadataInstruction({
     collectionDetails: null,
   };
 
-  return createCreateMetadataAccountV3Instruction(
-    {
-      metadata: metadataPDA,
-      mint,
-      mintAuthority,
-      payer,
-      updateAuthority,
-    },
-    {
-      createMetadataAccountArgsV3: data,
-    }
-  );
+  const ix = createMetadataAccountV3({ ...accounts }, { ...args });
+  const tx = new Transaction().add(ix);
+
+  await sendAndConfirmTransaction(connection, tx, [wallet]);
 }
