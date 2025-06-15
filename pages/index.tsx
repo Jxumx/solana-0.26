@@ -9,7 +9,7 @@ import {
 import { clusterApiUrl } from '@solana/web3.js';
 import { useMemo } from 'react';
 import TokenForm from '../components/TokenForm';
-import TokenList from '../components/TokenList';
+import { TokenList } from '../components/TokenList';
 import TradingViewChart from '../components/TradingViewChart';
 
 require('@solana/wallet-adapter-react-ui/styles.css');
