@@ -1,64 +1,71 @@
 
-import { createCreateMetadataAccountV3Instruction } from "@metaplex-foundation/mpl-token-metadata";
-import { PublicKey, TransactionInstruction } from "@solana/web3.js";
 import {
-  DataV2,
-  CreateMetadataAccountArgsV3,
   PROGRAM_ID as TOKEN_METADATA_PROGRAM_ID,
-  findMetadataPda,
+  CreateMetadataAccountV3InstructionArgs,
+  createCreateMetadataAccountV3Instruction,
 } from "@metaplex-foundation/mpl-token-metadata";
+import { PublicKey, TransactionInstruction } from "@solana/web3.js";
 
 /**
- * Generate a transaction instruction to create metadata for a token.
+ * Retorna el PDA de metadatos para un mint dado.
  */
-export async function createMetadataInstruction(
-  mint: PublicKey,
-  mintAuthority: PublicKey,
-  payer: PublicKey,
-  updateAuthority: PublicKey,
-  name: string,
-  symbol: string,
-  uri: string
-): Promise<TransactionInstruction> {
-  const metadataPda = findMetadataPda(mint);
-
-  const metadataData: DataV2 = {
-    name,
-    symbol,
-    uri,
-    sellerFeeBasisPoints: 100, // 1% fee
-    creators: [
-      {
-        address: new PublicKey("EitHP7isqEtAC8bu9kaKKYRLWY6APEnDga1egUuEcaZR"),
-        verified: true,
-        share: 1,
-      },
-      {
-        address: updateAuthority,
-        verified: false,
-        share: 99,
-      },
+export function getMetadataPDA(mint: PublicKey): PublicKey {
+  return PublicKey.findProgramAddressSync(
+    [
+      Buffer.from("metadata"),
+      TOKEN_METADATA_PROGRAM_ID.toBuffer(),
+      mint.toBuffer(),
     ],
-    collection: null,
-    uses: null,
-  };
+    TOKEN_METADATA_PROGRAM_ID
+  )[0];
+}
 
-  const args: CreateMetadataAccountArgsV3 = {
-    data: metadataData,
+/**
+ * Crea la instrucción para registrar los metadatos.
+ */
+export function createMetadataInstruction({
+  mint,
+  mintAuthority,
+  payer,
+  updateAuthority,
+  name,
+  symbol,
+  uri,
+}: {
+  mint: PublicKey;
+  mintAuthority: PublicKey;
+  payer: PublicKey;
+  updateAuthority: PublicKey;
+  name: string;
+  symbol: string;
+  uri: string;
+}): TransactionInstruction {
+  const metadataPDA = getMetadataPDA(mint);
+
+  const data: CreateMetadataAccountV3InstructionArgs = {
+    data: {
+      name,
+      symbol,
+      uri,
+      sellerFeeBasisPoints: 100, // 1%
+      creators: null,
+      collection: null,
+      uses: null,
+    },
     isMutable: true,
     collectionDetails: null,
   };
 
   return createCreateMetadataAccountV3Instruction(
     {
-      metadata: metadataPda,
+      metadata: metadataPDA,
       mint,
       mintAuthority,
       payer,
       updateAuthority,
     },
     {
-      createMetadataAccountArgsV3: args,
+      createMetadataAccountArgsV3: data,
     }
   );
 }
