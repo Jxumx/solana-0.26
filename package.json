@@ -7,7 +7,7 @@
     "start": "next start"
   },
   "dependencies": {
-    "@metaplex-foundation/js": "^1.31.0",
+    "@metaplex-foundation/js": "^1.18.0",
     "@metaplex-foundation/mpl-token-metadata": "^3.3.0",
     "@solana/spl-token": "^0.3.8",
     "@solana/wallet-adapter-base": "^0.9.23",
