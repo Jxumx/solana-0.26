@@ -1,0 +1,11 @@
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+}
+
+.banner {
+  background: yellow;
+  padding: 10px;
+  text-align: center;
+  font-weight: bold;
+}
