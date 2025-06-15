@@ -1,35 +1,34 @@
-
 import {
-  DataV2,
-  CreateMetadataAccountV3InstructionArgs,
   createCreateMetadataAccountV3Instruction,
-  PROGRAM_ID as TOKEN_METADATA_PROGRAM_ID,
-} from "@metaplex-foundation/mpl-token-metadata";
-import { PublicKey, TransactionInstruction } from "@solana/web3.js";
+  CreateMetadataAccountArgsV3,
+  DataV2,
+  PROGRAM_ID as TOKEN_METADATA_PROGRAM_ID
+} from '@metaplex-foundation/mpl-token-metadata';
+import { PublicKey, TransactionInstruction } from '@solana/web3.js';
 
-/**
- * Crea la instrucción para registrar los metadatos del token.
- */
 export function createMetadataInstruction({
-  metadata,
   mint,
-  mintAuthority,
   payer,
-  updateAuthority,
   name,
   symbol,
-  uri,
+  uri
 }: {
-  metadata: PublicKey;
   mint: PublicKey;
-  mintAuthority: PublicKey;
   payer: PublicKey;
-  updateAuthority: PublicKey;
   name: string;
   symbol: string;
   uri: string;
 }): TransactionInstruction {
-  const dataV2: DataV2 = {
+  const metadataPDA = PublicKey.findProgramAddressSync(
+    [
+      Buffer.from('metadata'),
+      TOKEN_METADATA_PROGRAM_ID.toBuffer(),
+      mint.toBuffer(),
+    ],
+    TOKEN_METADATA_PROGRAM_ID
+  )[0];
+
+  const data: DataV2 = {
     name,
     symbol,
     uri,
@@ -39,22 +38,22 @@ export function createMetadataInstruction({
     uses: null,
   };
 
-  const args: CreateMetadataAccountV3InstructionArgs = {
-    data: dataV2,
-    isMutable: true,
-    collectionDetails: null,
-  };
-
-  return createCreateMetadataAccountV3Instruction(
+  const instruction = createCreateMetadataAccountV3Instruction(
     {
-      metadata,
+      metadata: metadataPDA,
       mint,
-      mintAuthority,
+      mintAuthority: payer,
       payer,
-      updateAuthority,
+      updateAuthority: payer,
     },
     {
-      createMetadataAccountArgsV3: args,
+      createMetadataAccountArgsV3: {
+        data,
+        isMutable: true,
+        collectionDetails: null,
+      },
     }
   );
+
+  return instruction;
 }
