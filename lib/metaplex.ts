@@ -1,59 +1,44 @@
 import {
-  createCreateMetadataAccountV3Instruction,
-  CreateMetadataAccountArgsV3,
+  createMetadataAccountV3,
+  CreateMetadataAccountV3InstructionArgs,
   DataV2,
-  PROGRAM_ID as TOKEN_METADATA_PROGRAM_ID
-} from '@metaplex-foundation/mpl-token-metadata';
-import { PublicKey, TransactionInstruction } from '@solana/web3.js';
+  PROGRAM_ID as TOKEN_METADATA_PROGRAM_ID,
+} from "@metaplex-foundation/mpl-token-metadata";
+import { PublicKey, TransactionInstruction } from "@solana/web3.js";
 
-export function createMetadataInstruction({
-  mint,
-  payer,
-  name,
-  symbol,
-  uri
-}: {
-  mint: PublicKey;
-  payer: PublicKey;
-  name: string;
-  symbol: string;
-  uri: string;
-}): TransactionInstruction {
-  const metadataPDA = PublicKey.findProgramAddressSync(
-    [
-      Buffer.from('metadata'),
-      TOKEN_METADATA_PROGRAM_ID.toBuffer(),
-      mint.toBuffer(),
-    ],
-    TOKEN_METADATA_PROGRAM_ID
-  )[0];
-
+export const getMetadataInstruction = (
+  metadata: PublicKey,
+  mint: PublicKey,
+  mintAuthority: PublicKey,
+  payer: PublicKey,
+  updateAuthority: PublicKey,
+  name: string,
+  symbol: string,
+  uri: string
+): TransactionInstruction => {
   const data: DataV2 = {
     name,
     symbol,
     uri,
-    sellerFeeBasisPoints: 100,
+    sellerFeeBasisPoints: 0,
     creators: null,
     collection: null,
     uses: null,
   };
 
-  const instruction = createCreateMetadataAccountV3Instruction(
-    {
-      metadata: metadataPDA,
-      mint,
-      mintAuthority: payer,
-      payer,
-      updateAuthority: payer,
-    },
-    {
-      createMetadataAccountArgsV3: {
-        data,
-        isMutable: true,
-        collectionDetails: null,
-      },
-    }
-  );
+  const args: CreateMetadataAccountV3InstructionArgs = {
+    data,
+    isMutable: true,
+    collectionDetails: null,
+  };
 
-  return instruction;
-}
+  return createMetadataAccountV3({
+    metadata,
+    mint,
+    mintAuthority,
+    payer,
+    updateAuthority,
+    programId: TOKEN_METADATA_PROGRAM_ID,
+    args,
+  });
+};
