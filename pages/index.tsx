@@ -1,7 +1,7 @@
 import Head from "next/head";
 import { useEffect, useState } from "react";
 import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
-import TokenForm from ".../components/TokenForm";
+import { TokenForm } from ".../components/TokenForm";
 import TokenList from ".../components/TokenList";
 import TradingViewChart from ".../components/TradingViewChart";
 import { getAllTokens } from ".../lib/token";
